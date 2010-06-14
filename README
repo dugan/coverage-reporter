@@ -1,0 +1,3 @@
+This is a simple tool to read coverage and figleaf data and report on it, providing filtering as needed.  
+
+Soon to be added are the ability to report coverage on a patch, useful for determining whether you've covered a commit.

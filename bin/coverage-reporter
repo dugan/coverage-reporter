@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+import os
+import sys
+
+if __name__ == '__main__':
+    sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.dirname(__file__))))
+    from coverage_reporter import cmdline
+    cmdline.main(sys.argv)
