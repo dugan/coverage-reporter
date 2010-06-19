@@ -11,6 +11,7 @@ import optparse
 
 from coverage_reporter.reports import summarize
 from coverage_reporter.reports import annotate
+from coverage_reporter import filter
 
 def get_option_parser():
     parser = optparse.OptionParser()
@@ -19,6 +20,8 @@ def get_option_parser():
     parser.add_option('--annotate', dest='annotate', action='store_true')
     parser.add_option('--exclude', dest='exclude', action='append')
     parser.add_option('--summarize', dest='summarize', action='store_true')
+    parser.add_option('--patch', dest='patch', action='store')
+    parser.add_option('--patch-level', '-p', dest='patch_level', action='store', default=0)
     summarize.add_options(parser)
     annotate.add_options(parser)
     return parser
@@ -30,6 +33,9 @@ def main(argv):
     options, path_list = parser.parse_args(argv[1:])
     if not options.coverage_type:
         raise RuntimeError('Must specify one of --figleaf, --coverage')
+    if not options.exclude:
+        options.exclude = []
+
     if options.coverage_type == 'figleaf':
         from coverage_reporter.collectors.figleaf_collector import FigleafCollector as Collector
     elif options.coverage_type == 'coverage':
@@ -38,6 +44,9 @@ def main(argv):
         from coverage_reporter.collectors.xml_collector import CorbertaCollector as Collector
     collector = Collector()
     coverage_data = collector.collect(path_list, options)
+
+    if options.patch:
+        coverage_data = filter.filter_by_patch(coverage_data, options.patch, int(options.patch_level))
 
     if options.annotate:
         annotate.annotate(coverage_data, options)

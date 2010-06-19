@@ -7,10 +7,13 @@ class CoverageData(object):
     (e.g. CoverageData.covered, a set, and CoverageData.sections, a
     dictionary of sets).
     """
-    def __init__(self):
-        self.covered = {}
-        self.sections = {}
-        self.lines = {}
+    def __init__(self, lines=None, covered=None):
+        if lines is None:
+            lines = {}
+        if covered is None:
+            covered = {}
+        self.covered = covered
+        self.lines = lines
 
     def get_covered(self, section_name=None):
         if not section_name:
@@ -18,24 +21,12 @@ class CoverageData(object):
         else:
             d = CoverageData()
             d.update_coverage(self.covered)
-            d.update_coverage(self.sections.get(section_name, {}))
             return d.get_covered()
-
-    def get_section_lines(self):
-        line_info = {}
-        for path, lines in self.lines.iteritems():
-            section_info = {}
-            covered_lines = self.covered.get(path, [])
-            line_info[path] = (lines, covered_lines, section_info)
-            for section_name, section in self.sections.items():
-                if path in section:
-                    section_info[section_name] = section[path]
-        return line_info
 
     def get_lines(self):
         line_info = {}
         for path, lines in self.lines.iteritems():
-            covered_lines = self.covered.get(path, [])
+            covered_lines = self.covered.get(path, set())
             line_info[path] = (lines, covered_lines)
         return line_info
 
@@ -69,17 +60,8 @@ class CoverageData(object):
             else:
                 coverage1[filename] = set(lines)
 
-    def update_coverage(self, coverage_dict, section_name=None):
-        if not section_name:
-            self._update_coverage(self.covered, coverage_dict)
-        else:
-            section_dict = self.sections.get(section_name, {})
-            self._update_coverage(section_dict, coverage_dict)
-            self.sections[section_name] = section_dict
-
-    def update_sections(self, section_dict):
-        for section_name, coverage_dict in section_dict.items():
-            self.update_coverage(coverage_dict, section_name)
+    def update_coverage(self, coverage_dict):
+        self._update_coverage(self.covered, coverage_dict)
 
     def update_lines(self, line_dict):
         self.lines.update(line_dict)
@@ -89,17 +71,13 @@ class CoverageData(object):
         self.update_coverage(other.covered)
         self.update_sections(other.sections)
 
-    def add_lines(self, path, lines):
-        self.lines[path] = lines
-
-    def filter_lines(self, line_dict):
-        final_lines = {}
-        for path, lines in line_dict.iteritems():
-            final_lines[path] = self.lines.get(path, set()) & set(lines)
-        self.lines = final_lines
-
-    def add_coverage(self, path, lines, section_name=None):
-        if not section_name:
-            self.covered[path] = lines
+    def __and__(self, other):
+        if isinstance(other, CoverageData):
+            coverage_dict = other.data
         else:
-            self.sections.get(section_name, {})[path] = line
+            coverage_dict = other
+
+        final_lines = {}
+        for path, lines in coverage_dict.iteritems():
+            final_lines[path] = set(self.lines.get(path, set())) & set(lines)
+        return CoverageData(lines=final_lines, covered=self.covered.copy())
