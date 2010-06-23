@@ -7,51 +7,39 @@ coverage-reporter --figleaf --annotate --exclude '.*/migrations/.*' <path> [<pat
 coverage-reporter --coverage --patch=stdin --annotate --exc
 """
 import sys
-import optparse
 
+from coverage_reporter import config
 from coverage_reporter.reports import summarize
 from coverage_reporter.reports import annotate
 from coverage_reporter import filter
 
-def get_option_parser():
-    parser = optparse.OptionParser()
-    parser.add_option('--figleaf', dest='coverage_type', action='store_const', const='figleaf')
-    parser.add_option('--coverage', dest='coverage_type', action='store_const', const='coverage')
-    parser.add_option('--annotate', dest='annotate', action='store_true')
-    parser.add_option('--exclude', dest='exclude', action='append')
-    parser.add_option('--summarize', dest='summarize', action='store_true')
-    parser.add_option('--patch', dest='patch', action='store')
-    parser.add_option('--patch-level', '-p', dest='patch_level', action='store', default=0)
-    summarize.add_options(parser)
-    annotate.add_options(parser)
-    return parser
 
-                    
 
 def main(argv):
-    parser = get_option_parser()
-    options, path_list = parser.parse_args(argv[1:])
-    if not options.coverage_type:
+    cfg = config.CoverageReporterConfig()
+    cfg.read()
+    path_list = cfg.parse_options(argv[1:])
+    if not cfg.coverage_type:
         raise RuntimeError('Must specify one of --figleaf, --coverage')
-    if not options.exclude:
-        options.exclude = []
+    if not cfg.exclude:
+        cfg.exclude = []
 
-    if options.coverage_type == 'figleaf':
+    if cfg.coverage_type == 'figleaf':
         from coverage_reporter.collectors.figleaf_collector import FigleafCollector as Collector
-    elif options.coverage_type == 'coverage':
+    elif cfg.coverage_type == 'coverage':
         from coverage_reporter.collectors.coverage_collector import CoveragePyCollector as Collector
-    elif options.coverage_type == 'xml':
+    elif cfg.coverage_type == 'xml':
         from coverage_reporter.collectors.xml_collector import CorbertaCollector as Collector
     collector = Collector()
-    coverage_data = collector.collect(path_list, options)
+    coverage_data = collector.collect(path_list, cfg)
 
-    if options.patch:
-        coverage_data = filter.filter_by_patch(coverage_data, options.patch, int(options.patch_level))
+    if cfg.patch:
+        coverage_data = filter.filter_by_patch(coverage_data, options.patch, int(cfg.patch_level))
 
-    if options.annotate:
-        annotate.annotate(coverage_data, options)
-    if options.summarize:
-        summarize.summarize(coverage_data, options)
+    if cfg.annotate:
+        annotate.annotate(coverage_data, cfg)
+    if cfg.summarize:
+        summarize.summarize(coverage_data, cfg)
 
 
 if __name__ == '__main__':
