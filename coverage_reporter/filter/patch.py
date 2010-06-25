@@ -13,7 +13,7 @@ def filter_by_patch(coverage_data, patch_path, patch_level):
 def _find_patch_file(path, level):
     path = os.path.sep.join(path.split(os.path.sep)[level:])
     if not os.path.exists(path):
-        sys.stderr.write("Could not find file %s with patch level %s - maybe wrong patch level?  Specify -p\n" % (path, level))
+        sys.stderr.write("Could not find file %r with patch level %s - maybe wrong patch level?  Specify -p\n" % (path, level))
         return None
     return os.path.realpath(path)
 
@@ -27,6 +27,7 @@ def _get_lines_from_patch(patch_file, patch_level):
             # place marker - name of file
             # +++ <filename>
             new_file = line.split(None, 1)[1]
+            new_file = line.split('\t', 1)[0]
             new_file = _find_patch_file(new_file, patch_level)
             if new_file:
                 file_dict.setdefault(new_file, [])

@@ -34,7 +34,7 @@ def main(argv):
     coverage_data = collector.collect(path_list, cfg)
 
     if cfg.patch:
-        coverage_data = filter.filter_by_patch(coverage_data, options.patch, int(cfg.patch_level))
+        coverage_data = filter.filter_by_patch(coverage_data, cfg.patch, int(cfg.patch_level))
 
     if cfg.annotate:
         annotate.annotate(coverage_data, cfg)
