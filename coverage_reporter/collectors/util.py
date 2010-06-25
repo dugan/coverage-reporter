@@ -26,7 +26,6 @@ def filter_paths(path_list, covered_paths, exclude_paths, filter_fn):
         path_list = covered_paths
         for path in path_list:
             for exclude_re in exclude_res:
-                pdb.set_trace()
                 if re.match(exclude_re, path):
                     break
             else:
