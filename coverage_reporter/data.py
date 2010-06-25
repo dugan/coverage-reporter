@@ -43,7 +43,10 @@ class CoverageData(object):
                 percent_covered = (num_covered * 100)/float(num_lines)
             else:
                 percent_covered = 0.0
-            report_info[path] = (num_lines, num_covered, percent_covered)
+            report_info[path] = { 'lines' : num_lines, 
+                                  'covered' : num_covered, 
+                                  'percent' : percent_covered,
+                                  'missing' : num_lines - num_covered }
             total_covered += num_covered
             total_lines += num_lines
         if not total_lines:
