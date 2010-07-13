@@ -18,7 +18,7 @@ def summarize(coverage_data, options):
         minimum = int(options.minimum_missing)
     else:
         minimum = 0
-    paths = sorted(path_totals, key=lambda x: path_totals[x]['missing'])
+    paths = sorted(path_totals, key=lambda x: x) #path_totals[x]['missing'])
     
     paths = [ x for x in paths if path_totals[x]['lines' ]]
     skipped_paths = len([ x for x in paths if path_totals[x]['missing'] < minimum ])
@@ -28,18 +28,19 @@ def summarize(coverage_data, options):
     paths = [ x for x in paths if path_totals[x]['missing'] >= minimum ]
 
     if path_totals:
-        longest_path = max([ len(x) for x in path_totals ])
+        longest_path = max([ len(x) for x in paths ])
     else:
         longest_path = 0
-    title = '%-*s%8s%8s%8s' % (longest_path, 'Name', 'Stmts',
-                                 'Exec', 'Cover')
+    title = '%-*s%8s%8s%8s%8s' % (longest_path, 'Name', 'Stmts',
+                                 'Exec', 'Miss', 'Cover')
 
     print title
     print '-' * len(title)
     for path in paths:
-        print '%*s%8s%8s%8.2f' % (longest_path, path, path_totals[path]['lines'],
-                                   path_totals[path]['covered'], path_totals[path]['percent'])
+        print '%-*s%8s%8s%8s%8.2f' % (longest_path, path, path_totals[path]['lines'],
+                                   path_totals[path]['covered'], path_totals[path]['missing'], path_totals[path]['percent'])
     print '-' * len(title)
     total_lines, total_covered, total_pct = final_totals
-    print '%-*s%8s%8s%8.2f' % (longest_path, 'TOTAL', total_lines,
-                                 total_covered, total_pct)
+    total_missed = total_lines - total_covered
+    print '%-*s%8s%8s%8s%8.2f' % (longest_path, 'TOTAL', total_lines,
+                                 total_covered, total_missed, total_pct)
