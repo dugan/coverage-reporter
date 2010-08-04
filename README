@@ -1,3 +1,17 @@
-This is a simple tool to read coverage and figleaf data and report on it, providing filtering as needed.  
+This is a tool to read coverage and figleaf data and report on it.
 
-Soon to be added are the ability to report coverage on a patch, useful for determining whether you've covered a commit.
+However, unlike those tools, coverage-reporter provides the ability to munge the
+data on the way to reporting as desired.
+
+For example, you can specify that you wish to only see the coverage for your
+current patch by specifying:
+
+git diff | coverage-reporter --patch=stdin --patch-level=0 --summarize --annotate .
+
+This will take the patch from git, read it and then only provide coverage
+information on those lines affected by your patch.
+
+Another useful command is --minimum-missing=100 - if you have a large number of
+covered files, this will limit the display to only those missing more than 100
+lines of coverage.  Also useful is --minimum-missing=1, which doesn't print any
+status for those files that are completely covered.
