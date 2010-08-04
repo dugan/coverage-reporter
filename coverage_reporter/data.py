@@ -1,3 +1,6 @@
+# Based off of figleaf's CoverageData object,
+# Though currently doesn't have support for figleaf sections or
+# coverage.py arcs.
 import os
 
 class CoverageData(object):
@@ -14,6 +17,7 @@ class CoverageData(object):
             covered = {}
         self.covered = covered
         self.lines = lines
+        self.exclude = []
 
     def get_covered(self, section_name=None):
         if not section_name:
@@ -29,6 +33,12 @@ class CoverageData(object):
             covered_lines = self.covered.get(path, set())
             line_info[path] = (lines, covered_lines)
         return line_info
+    
+    def get_lines_for_path(self, path):
+        return (self.lines.get(path, set()), self.covered.get(path, set()))
+
+    def get_paths(self):
+        return self.lines.keys()
 
     def get_totals(self):
         report_info = {}
@@ -55,6 +65,11 @@ class CoverageData(object):
             total_percent = (total_covered * 100)/float(total_lines)
         return report_info, (total_lines, total_covered, total_percent)
 
+    def get_missing_lines_for_path(self, path):
+        num_lines = len(self.lines.get(path, []))
+        covered_lines = len(self.covered.get(path, []))
+        return num_lines - covered_lines
+
     def _update_coverage(self, coverage1, coverage2):
         for filename, lines in coverage2.items():
             filename = os.path.realpath(os.path.abspath(filename))
@@ -72,7 +87,6 @@ class CoverageData(object):
     def merge(self, other):
         self.lines.update(other.lines)
         self.update_coverage(other.covered)
-        self.update_sections(other.sections)
 
     def __and__(self, other):
         if isinstance(other, CoverageData):

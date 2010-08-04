@@ -1,6 +1,16 @@
 import os
 import sys
 
+from coverage_reporter.plugins import Plugin, Option
+
+class FilterByPatch(Plugin):
+    name = 'patch'
+    options = [ Option('patch', 'string', help='Filter coverage reports by patch at PATCH.  Can be file or stdin'),
+                Option('patch_level', 'int', help='Patch level, as usually specified to patch command'), ]
+
+    def filter(self, coverage_data):
+        return filter_by_patch(coverage_data, self.patch, self.patch_level)
+
 def filter_by_patch(coverage_data, patch_path, patch_level):
     if not os.path.exists(patch_path) and patch_path.lower() == 'stdin':
         patch_file = sys.stdin

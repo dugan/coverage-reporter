@@ -1,46 +1,42 @@
 import os
 
-def add_options(parser):
-    parser.add_option('--minimum-missing', dest='minimum_missing')
+from coverage_reporter.plugins import Plugin, Option
 
+class SummarizeReporter(Plugin):
+    name = 'summarize'
 
-def summarize(coverage_data, options):
-    curdir = os.path.realpath(os.getcwd())
+    options = [Option('summarize', 'boolean', help="Display summary of coverage information to screen")]
 
-    path_totals, final_totals = coverage_data.get_totals()
-    new_path_totals = {}
-    for path in path_totals:
-        if path.startswith(curdir):
-            new_path = path[len(curdir)+1:]
-            path_totals[new_path] = path_totals.pop(path)
+    def report(self, coverage_data, path_list):
+        curdir = os.path.realpath(os.getcwd())
 
-    if options.minimum_missing is not None:
-        minimum = int(options.minimum_missing)
-    else:
-        minimum = 0
-    paths = sorted(path_totals, key=lambda x: x) #path_totals[x]['missing'])
-    
-    paths = [ x for x in paths if path_totals[x]['lines' ]]
-    skipped_paths = len([ x for x in paths if path_totals[x]['missing'] < minimum ])
-    if skipped_paths:
-        print "Skipping %s files due to minimum missing of %s" % (skipped_paths, minimum,)
+        path_totals, final_totals = coverage_data.get_totals()
 
-    paths = [ x for x in paths if path_totals[x]['missing'] >= minimum ]
+        new_paths = []
+        for path in path_list:
+            if path.startswith(curdir):
+                new_path = path[len(curdir)+1:]
+                path_totals[new_path] = path_totals[path]
+                new_paths.append(new_path)
+            else:
+                new_paths.append(path)
 
-    if path_totals:
-        longest_path = max([ len(x) for x in paths ])
-    else:
-        longest_path = 0
-    title = '%-*s%8s%8s%8s%8s' % (longest_path, 'Name', 'Stmts',
-                                 'Exec', 'Miss', 'Cover')
+        paths = sorted(x for x in new_paths if path_totals[x]['lines' ])
 
-    print title
-    print '-' * len(title)
-    for path in paths:
-        print '%-*s%8s%8s%8s%8.2f' % (longest_path, path, path_totals[path]['lines'],
-                                   path_totals[path]['covered'], path_totals[path]['missing'], path_totals[path]['percent'])
-    print '-' * len(title)
-    total_lines, total_covered, total_pct = final_totals
-    total_missed = total_lines - total_covered
-    print '%-*s%8s%8s%8s%8.2f' % (longest_path, 'TOTAL', total_lines,
-                                 total_covered, total_missed, total_pct)
+        if paths:
+            longest_path = max([ len(x) for x in paths ])
+        else:
+            longest_path = 0
+        title = '%-*s%8s%8s%8s%8s' % (longest_path, 'Name', 'Stmts',
+                                     'Exec', 'Miss', 'Cover')
+
+        print title
+        print '-' * len(title)
+        for path in paths:
+            print '%-*s%8s%8s%8s%8.2f' % (longest_path, path, path_totals[path]['lines'],
+                                       path_totals[path]['covered'], path_totals[path]['missing'], path_totals[path]['percent'])
+        print '-' * len(title)
+        total_lines, total_covered, total_pct = final_totals
+        total_missed = total_lines - total_covered
+        print '%-*s%8s%8s%8s%8.2f' % (longest_path, 'TOTAL', total_lines,
+                                     total_covered, total_missed, total_pct)
