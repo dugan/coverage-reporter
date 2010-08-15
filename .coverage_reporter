@@ -1,0 +1,5 @@
+[coverage_reporter]
+exclude = tests/ setup.py
+coverage = true
+annotate = true
+summarize = true

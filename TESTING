@@ -1,0 +1,10 @@
+Meant to be tested with "unit2 discover".
+
+In order to get coverage numbers, you'll need the unittest2 plugins branch.
+
+Add the coverage_reporter.extras.unittest2_plugin to your plugin list (remove
+the testcoverage one which uses coverage's built-in reporting) and run with
+--coverage.
+
+Afterwards, run bin/coverage-reporter . (there is a .coverage_reporter file in this
+directory that contains coverage reporter config)
