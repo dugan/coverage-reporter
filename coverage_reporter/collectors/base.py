@@ -10,7 +10,7 @@ class BaseCollector(Plugin):
 
     """
 
-    def collect(self, path_list, path_filter):
+    def collect(self, path_list, path_filter=None):
         coverage_data = data.CoverageData()
         covered_lines = self.collect_covered_lines()
         coverage_data.update_coverage(covered_lines)
@@ -30,12 +30,11 @@ class BaseCollector(Plugin):
         """
         return {}
 
-    def collect_all_lines(self, path_list, covered_lines, path_filter):
+    def collect_all_lines(self, path_list, covered_lines, path_filter=None):
         """
         Returns dictionary of { path : [ line, line ] } that describes every possible coverable line.
         """
         line_dict = {}
-        paths = list(util.filter_paths(path_list, covered_lines, path_filter))
         for path in util.filter_paths(path_list, covered_lines, path_filter):
             if self.should_cover(path):
                 line_dict[path] = self.get_all_lines_from_path(path)
