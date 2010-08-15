@@ -16,8 +16,7 @@ class FigLeafTest(CoverageReporterTestCase):
 
     def cover_program(self, program_name):
         import figleaf
-        cur_trace = sys.gettrace()
-        sys.settrace(None)
+        cur_trace = sys.settrace(None)
         if os.path.exists('.figleaf_test'):
             os.remove('.figleaf_test')
         figleaf.start()

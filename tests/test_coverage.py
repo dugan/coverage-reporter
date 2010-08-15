@@ -16,7 +16,7 @@ class CoveragePyTest(CoverageReporterTestCase):
 
     def cover_program(self, program_name):
         import coverage
-        cur_trace = sys.gettrace()
+        cur_trace = sys.settrace(None)
         cov = coverage.coverage(data_file='.test_coverage')
         if os.path.exists('.test_coverage'):
             os.remove('.test_coverage')
