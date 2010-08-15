@@ -28,21 +28,28 @@ DEFAULT_PLUGINS = ['coverage_reporter.collectors.figleaf_collector.FigleafCollec
 
 
 class CoverageReporterConfig(object):
-    def __init__(self):
+    def __init__(self, read_defaults=True):
         self.plugin_manager = PluginManager()
+        self.cfg = ConfigParser.RawConfigParser()
+        if read_defaults:
+            self.read('/etc/coverage_reporter', os.path.expanduser('~/.coverage_reporter'), '.coverage_reporter')
 
-    def load_plugins(self):
-        cfg = ConfigParser.RawConfigParser()
-        cfg.read(['/etc/coverage_reporter', os.path.expanduser('~/.coverage_reporter'), '.coverage_reporter'])
-        section = ConfigSection(cfg, 'coverage_reporter')
-        plugin_classes = section.get_list('plugins', [])
+    def read(self, *path_list):
+        self.cfg.read(path_list)
+        
+    def load_plugins(self, plugin_classes=None):
+        section = ConfigSection(self.cfg, 'coverage_reporter')
         if not plugin_classes:
-            plugin_classes = DEFAULT_PLUGINS
+            plugin_classes = section.get_list('plugins', [])
+            if not plugin_classes:
+                plugin_classes = DEFAULT_PLUGINS
 
-        def get_section(name):
-            return ConfigSection(cfg, 'coverage_reporter')
-        self.plugin_manager.load_plugins(get_section, plugin_classes)
+        plugins = self.plugin_manager.load_plugins(section, plugin_classes)
         self.plugins_loaded = True
+        return plugins
+
+    def get_plugins(self, plugin_list):
+        return self.plugin_manager.get_plugins(plugin_list)
 
     def get_option_parser(self):
         parser = optparse.OptionParser()

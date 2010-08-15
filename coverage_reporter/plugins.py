@@ -1,3 +1,5 @@
+import sys
+
 from coverage_reporter.errors import PluginError, ConfigError
 
 __all__ = ['Plugin', 'Option']
@@ -77,6 +79,14 @@ class Option(object):
         self.default = default
         self.option_kwargs = option_kwargs
 
+    def __repr__(self):
+        return 'Option(%r, %r, default=%r, **%r)' % (self.name, 
+                                                     self.option_type, 
+                                                     self.default, 
+                                                     self.option_kwargs,
+                                                    )
+
+
     def add_option(self, parser):
         if self.option_type in ('int', 'string'):
             action = 'store'
@@ -101,6 +111,8 @@ class Option(object):
             if self.option_type == 'int' and value is not None:
                 value = int(value)
             elif self.option_type == 'boolean' and value is not None:
+                if isinstance(value, bool):
+                    return True
                 if value.lower() in ('true', '1'):
                     return True
                 elif value.lower() in ('false', '0'):
@@ -133,11 +145,11 @@ class PluginManager(object):
                 continue
             method(*args, **kwargs)
 
-    def load_plugins(self, cfg_factory, class_strings):
+    def load_plugins(self, config_obj, class_strings):
         classes = self.load_classes(class_strings)
         for class_ in classes:
             self.validate_plugin(class_)
-            plugin = class_(cfg_factory(class_.name))
+            plugin = class_(config_obj)
             self.plugins.append(plugin)
             if hasattr(plugin, 'collect'):
                 self.collectors.append(plugin)
@@ -150,6 +162,7 @@ class PluginManager(object):
                 self.coverage_filters.append(plugin)
             if hasattr(class_, 'report'):
                 self.reporters.append(plugin)
+        return self.plugins
 
     def validate_plugin(self, plugin):
         required_attributes = ['enabled', 'name']
@@ -175,11 +188,15 @@ class PluginManager(object):
     def load_classes(self, class_strings):
         classes = []
         for class_string in class_strings:
-            module_path, class_name = class_string.rsplit('.', 1)
-            module = __import__(module_path, fromlist=True)
-            class_ = getattr(module, class_name)
-            classes.append(class_)
+            classes.append(self.load_class(class_string))
         return classes
+
+    def load_class(self, class_string):
+        module_path, class_name = class_string.rsplit('.', 1)
+        __import__(module_path)
+        module = sys.modules[module_path]
+        class_ = getattr(module, class_name)
+        return class_
 
 
 class Filter(object):
