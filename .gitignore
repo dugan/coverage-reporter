@@ -2,3 +2,6 @@
 *.swp
 coverage_reporter.egg-info
 dist/
+annotate/
+.failures
+.coverage
