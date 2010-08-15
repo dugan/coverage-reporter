@@ -8,7 +8,12 @@ class CoveragePyCollector(BaseCollector):
     name = 'coverage'
 
     options = [ Option('coverage', 'boolean', 
-                       help='Enables loading of coverage information from coverage.py') ]
+                       help='Enables loading of coverage information from coverage.py'),
+                Option('coverage_file', 
+                       'string', 
+                       help='name of coveragel file to look at for coverage information.  Default .coverage', 
+                       default='.coverage'),
+              ]
 
     def should_cover(self, path):
         return path.endswith('.py')
@@ -20,7 +25,7 @@ class CoveragePyCollector(BaseCollector):
         return statements
 
     def collect_covered_lines(self):
-       from coverage.data import CoverageData
-       data = CoverageData()
-       data.read_file('.coverage')
-       return data.lines
+        from coverage.data import CoverageData
+        data = CoverageData()
+        data.read_file(self.coverage_file)
+        return data.lines

@@ -11,7 +11,12 @@ class FigleafCollector(BaseCollector):
     """
     name = 'figleaf'
     options = [Option('figleaf', 'boolean', 
-                      help='Enables loading of coverage information from figleaf') ]
+                      help='Enables loading of coverage information from figleaf'),
+               Option('figleaf_file', 
+                      'string', 
+                      help='name of figleaf file to look at for coverage information.  Default .figleaf', 
+                      default='.figleaf') 
+              ]
 
     def should_cover(self, path):
         return path.endswith('.py')
@@ -29,4 +34,4 @@ class FigleafCollector(BaseCollector):
 
     def collect_covered_lines(self):
         import figleaf
-        return figleaf.read_coverage('.figleaf')
+        return figleaf.read_coverage(self.figleaf_file)
