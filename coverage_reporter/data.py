@@ -18,6 +18,7 @@ class CoverageData(object):
         self.covered = covered
         self.lines = lines
         self.exclude = []
+        self._paths = {}
 
     def get_covered(self, section_name=None):
         if not section_name:
@@ -33,6 +34,11 @@ class CoverageData(object):
             covered_lines = self.covered.get(path, set())
             line_info[path] = (lines, covered_lines)
         return line_info
+
+    def canonical_path(self, path):
+        if path not in self._paths:
+            self._paths[path] = os.path.realpath(os.path.abspath(path))
+        return self._paths[path]
     
     def get_lines_for_path(self, path):
         return (self.lines.get(path, set()), self.covered.get(path, set()))
@@ -66,13 +72,14 @@ class CoverageData(object):
         return report_info, (total_lines, total_covered, total_percent)
 
     def get_missing_lines_for_path(self, path):
+        path = self.canonical_path(path)
         num_lines = len(self.lines.get(path, []))
         covered_lines = len(self.covered.get(path, []))
         return num_lines - covered_lines
 
     def _update_coverage(self, coverage1, coverage2):
         for filename, lines in coverage2.items():
-            filename = os.path.realpath(os.path.abspath(filename))
+            filename = self.canonical_path(filename)
             if filename in coverage1:
                 coverage1[filename].update(lines)
             else:
@@ -82,7 +89,8 @@ class CoverageData(object):
         self._update_coverage(self.covered, coverage_dict)
 
     def update_lines(self, line_dict):
-        self.lines.update(line_dict)
+        for path, lines in line_dict.iteritems():
+            self.lines[self.canonical_path(path)] = lines
 
     def merge(self, other):
         self.lines.update(other.lines)
