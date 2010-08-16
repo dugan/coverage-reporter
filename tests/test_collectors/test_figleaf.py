@@ -16,7 +16,7 @@ class FigLeafTest(CoverageReporterTestCase):
 
     def cover_program(self, program_name):
         import figleaf
-        cur_trace = sys.settrace(None)
+        cur_trace = sys.gettrace()
         if os.path.exists('.figleaf_test'):
             os.remove('.figleaf_test')
         figleaf.start()
@@ -29,11 +29,15 @@ class FigLeafTest(CoverageReporterTestCase):
             cur_trace.start()
 
     def test_figleaf(self):
+        if sys.version_info[:2] < (2, 6):
+            # no support for gettrace
+            return
         self.cover_program('tests.data.prog1')
         collector = self.load_plugin('coverage_reporter.collectors.figleaf_collector.FigleafCollector')
         collector.figleaf_file = '.figleaf_test'
         data = collector.collect(['tests/data/prog1.py'])
         full_path = os.path.realpath('tests/data/prog1.py')
         self.assertEqual(data.lines.keys(), [full_path])
-        self.assertEqual(data.lines[full_path], set([3,4,5,6,8,9]))
-        self.assertEqual(data.covered[full_path], set([3,4,5,8,9])) # note - line 6 is not covered.
+        all_lines = set([3,4,5,6,8,9])
+        self.assertEqual(data.lines[full_path], all_lines)
+        self.assertEqual(data.covered[full_path], all_lines - set([6]))

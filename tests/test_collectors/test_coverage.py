@@ -4,8 +4,6 @@ import sys
 from tests.testcase import *
 
 import coverage_reporter
-from coverage_reporter.plugins import Filter
-
 
 class CoveragePyTest(CoverageReporterTestCase):
 
@@ -16,7 +14,7 @@ class CoveragePyTest(CoverageReporterTestCase):
 
     def cover_program(self, program_name):
         import coverage
-        cur_trace = sys.settrace(None)
+        cur_trace = sys.gettrace()
         cov = coverage.coverage(data_file='.test_coverage')
         if os.path.exists('.test_coverage'):
             os.remove('.test_coverage')
@@ -30,6 +28,9 @@ class CoveragePyTest(CoverageReporterTestCase):
             cur_trace.start()
 
     def test_coverage(self):
+        if sys.version_info[:2] < (2, 6):
+            # no support for gettrace
+            return
         self.cover_program('tests.data.prog1')
         collector = self.load_plugin('coverage_reporter.collectors.coverage_collector.CoveragePyCollector')
         collector.coverage_file = '.test_coverage'
