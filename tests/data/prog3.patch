@@ -1,0 +1,14 @@
+--- tests/data/prog2.py	2010-08-16 07:29:45.000000000 -0400
++++ tests/data/prog3.py	2010-08-16 07:30:59.000000000 -0400
+@@ -1,7 +1,8 @@
+-def foo(one, two, three):
++def foo(one, three, four):
+     if one:
+         return one
+-    if two:
+-        return two
+     if three:
+         return three
++    four = four * 4
++    # this is an added comment
++    return four

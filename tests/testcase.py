@@ -1,5 +1,7 @@
 import sys
 
+import shutil
+import tempfile
 import unittest2
 
 from coverage_reporter.data import CoverageData
@@ -25,6 +27,17 @@ class CoverageReporterTestCase(unittest2.TestCase):
     def load_plugins(self, plugin_list):
         return self.cfg.load_plugins(plugin_list)
 
+    def create_exact_coverage_data(self, path_dict):
+        data = CoverageData()
+        lines = {}
+        covered = {}
+        for path, path_info in path_dict.items():
+            lines[path] = path_info['lines']
+            covered[path] = path_info['covered']
+        data.update_lines(lines)
+        data.update_coverage(covered)
+        return data
+
     def create_coverage_data(self, path_dict):
         data = CoverageData()
         lines = {}
@@ -37,3 +50,12 @@ class CoverageReporterTestCase(unittest2.TestCase):
         data.update_lines(lines)
         data.update_coverage(covered)
         return data
+
+def with_tempdir(fn):
+    def wrapped(self):
+        tempdir = tempfile.mkdtemp(prefix='coverage-reporter-test-')
+        try:
+            return fn(self, tempdir)
+        finally:
+            shutil.rmtree(tempdir)
+    return wrapped

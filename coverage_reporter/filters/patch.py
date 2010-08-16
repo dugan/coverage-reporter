@@ -37,7 +37,7 @@ def _get_lines_from_patch(patch_file, patch_level):
             # place marker - name of file
             # +++ <filename>
             new_file = line.split(None, 1)[1]
-            new_file = line.split('\t', 1)[0]
+            new_file = new_file.split('\t', 1)[0]
             new_file = _find_patch_file(new_file, patch_level)
             if new_file:
                 file_dict.setdefault(new_file, [])
