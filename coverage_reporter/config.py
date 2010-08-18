@@ -10,13 +10,13 @@ import optparse
 import os
 import shlex
 
-from coverage_reporter.plugins import PluginManager
 from coverage_reporter.errors import ConfigError
 
 
 # Default set of plugins.  Need to figure out some way to add plugins without having to re-specify all of these,
 # as you probably really want these.  Perhaps move to loading plugins from a set of directories, and only require
 # hard-coding the submodule name?
+
 DEFAULT_PLUGINS = ['coverage_reporter.collectors.figleaf_collector.FigleafCollector',
                    'coverage_reporter.collectors.coverage_collector.CoveragePyCollector',
                    'coverage_reporter.filters.patch.FilterByPatch',
@@ -27,58 +27,20 @@ DEFAULT_PLUGINS = ['coverage_reporter.collectors.figleaf_collector.FigleafCollec
                    ]
 
 
+DEFAULT_PATHS = ['/etc/coverage_reporter', os.path.expanduser('~/.coverage_reporter'), '.coverage_reporter']
+
 class CoverageReporterConfig(object):
     def __init__(self, read_defaults=True):
-        self.plugin_manager = PluginManager()
         self.cfg = ConfigParser.RawConfigParser()
         if read_defaults:
-            self.read('/etc/coverage_reporter', os.path.expanduser('~/.coverage_reporter'), '.coverage_reporter')
+            self.read(*DEFAULT_PATHS)
+        self.plugin_classes = DEFAULT_PLUGINS
 
     def read(self, *path_list):
         self.cfg.read(path_list)
-        
-    def load_plugins(self, plugin_classes=None):
-        section = ConfigSection(self.cfg, 'coverage_reporter')
-        if not plugin_classes:
-            plugin_classes = section.get_list('plugins', [])
-            if not plugin_classes:
-                plugin_classes = DEFAULT_PLUGINS
 
-        plugins = self.plugin_manager.load_plugins(section, plugin_classes)
-        self.plugins_loaded = True
-        return plugins
-
-    def get_plugins(self, plugin_list):
-        return self.plugin_manager.get_plugins(plugin_list)
-
-    def get_option_parser(self):
-        parser = optparse.OptionParser()
-        self.plugin_manager.call_method('add_options', parser)
-        return parser
-
-    def parse_options(self, args):
-        parser = self.get_option_parser()
-        options, args = parser.parse_args(args)
-        self.plugin_manager.call_method('parse_options', options)
-        return args
-
-    def initialize_plugins(self):
-        self.plugin_manager.call_method('initialize')
-
-    def get_collectors(self):
-        return self.plugin_manager.get_collectors()
-
-    def get_filters(self):
-        return self.plugin_manager.get_filters()
-
-    def get_coverage_filter(self):
-        return self.plugin_manager.get_coverage_filter()
-
-    def get_reporter_filter(self):
-        return self.plugin_manager.get_reporter_filter()
-
-    def get_reporters(self):
-        return self.plugin_manager.get_reporters()
+    def get_section(self, name):
+        return ConfigSection(self.cfg, name)
 
 class ConfigSection(object):
     """

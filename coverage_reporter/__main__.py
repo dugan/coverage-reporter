@@ -14,46 +14,62 @@ import sys
 
 from coverage_reporter import config
 from coverage_reporter import errors
-from coverage_reporter import data
+from coverage_reporter.plugins import PluginManager
+from coverage_reporter.data import CoverageData
 
-def main(argv):
+def parse_options(cfg, plugins, argv):
+    plugins.parse_plugin_options(argv[1:])
+    plugins.load_plugins(cfg.get_section('coverage_reporter'), cfg.plugin_classes)
+    path_list = plugins.parse_options(argv[1:])
+    return path_list
 
-    cfg = config.CoverageReporterConfig()
-    cfg.load_plugins()
+def collect(collectors, path_list, cover_filter):
+    data = CoverageData()
+    for collector in collectors:
+        new_data = collector.collect(path_list, cover_filter)
+        data.merge(new_data)
+    return data
 
-    path_list = cfg.parse_options(argv[1:])
-    cfg.initialize_plugins()
+def filter_collection_paths(path_list, filter=None):
+    path_list = iter_full_paths(path_list)
+    if filter is not None:
+        path_list = (x for x in path_list if filter.filter(x))
+    return path_list
 
-    collectors = cfg.get_collectors()
-    reporters = cfg.get_reporters()
+def filter_coverage(data, filters):
+    for filter in filters:
+        data = filter.filter(data)
+    return data
 
-    if not collectors:
-        raise errors.CoverageReporterError('Please specify a source for coverage information')
-
-    if not reporters:
-        raise errors.CoverageReporterError('Please specify at least one form of reporting.')
-
-    coverage_data = data.CoverageData()
-    cover_filter = cfg.get_coverage_filter()
-    for collector in cfg.get_collectors():
-        new_coverage_data = collector.collect(path_list, cover_filter)
-        coverage_data.merge(new_coverage_data)
-
-    for filter in cfg.get_filters():
-        coverage_data = filter.filter(coverage_data)
-    print "reporting data"
-
-    reporter_filter = cfg.get_reporter_filter()
-
-    all_paths = coverage_data.get_paths() 
-    matched_paths = list(reporter_filter.filter_all(all_paths, coverage_data))
-
-    num_skipped_paths = len(all_paths) - len(matched_paths)
+def filter_reporting_paths(paths, data, reporter_filter):
+    matched_paths = list(reporter_filter.filter_all(paths, data))
+    num_skipped_paths = len(paths) - len(matched_paths)
     if num_skipped_paths:
         print "Not reporting on %s files due to filters" % (num_skipped_paths,)
+    return matched_paths
 
-    for reporter in cfg.get_reporters():
-        reporter.report(coverage_data, matched_paths)
+def report(data, reporters, paths):
+    for reporter in reporters:
+        reporter.report(data, paths)
 
+def validate_active_plugins(plugins):
+    if not plugins.get_reporters():
+        raise errors.CoverageReporterError('Please specify at least one form of reporting.')
+    if not plugins.get_collectors():
+        raise errors.CoverageReporterError('Please specify a source for coverage information')
+
+def main(argv):
+    plugins = PluginManager()
+    cfg = config.CoverageReporterConfig()
+
+    path_list = parse_options(cfg, plugins, argv)
+    plugins.initialize()
+    validate_active_plugins(plugins)
+
+    data = collect(plugins.get_collectors(), path_list, plugins.get_coverage_filter())
+    data = filter_coverage(data, plugins.get_filters())
+    report_paths = filter_reporting_paths(data.get_paths(), data, plugins.get_reporter_filter())
+    report(data, plugins.get_reporters(), report_paths)
+    
 if __name__ == '__main__':
     main(sys.argv)

@@ -1,4 +1,5 @@
-from coverage_reporter.collectors import util
+import os
+
 from coverage_reporter import data
 from coverage_reporter.plugins import Plugin
 
@@ -14,7 +15,17 @@ class BaseCollector(Plugin):
         coverage_data = data.CoverageData()
         covered_lines = self.collect_covered_lines()
         coverage_data.update_coverage(covered_lines)
-        all_lines = self.collect_all_lines(path_list, covered_lines, path_filter)
+
+        if not path_list:
+            path_list = covered_lines.keys()
+
+        path_list = _iter_full_paths(path_list)
+
+        if path_filter:
+            path_list = ( x for x in path_list if path_filter.filter(x) )
+        path_list = ( x for x in path_list if self.should_cover(x) )
+
+        all_lines = dict((path, self.get_all_lines_from_path(path)) for path in path_list)
         coverage_data.update_lines(all_lines)
         return coverage_data
 
@@ -22,26 +33,34 @@ class BaseCollector(Plugin):
         """
         Returns True if this coverage tool can handle covering this path.
         """
-        return False
+        raise NotImplementedError
 
     def collect_covered_lines(self):
         """
         Returns dictionary of { path : [ line, line ] } that describes every actually covered line.
         """
-        return {}
+        raise NotImplementedError
 
-    def collect_all_lines(self, path_list, covered_lines, path_filter=None):
-        """
-        Returns dictionary of { path : [ line, line ] } that describes every possible coverable line.
-        """
-        line_dict = {}
-        for path in util.filter_paths(path_list, covered_lines, path_filter):
-            if self.should_cover(path):
-                line_dict[path] = self.get_all_lines_from_path(path)
-        return line_dict
-
-    def get_total_lines_from_path(self, path):
+    def get_all_lines_from_path(self, path):
         """
         Returns a list of every possible coverable line in <path>.
         """
-        return []
+        raise NotImplementedError
+
+
+
+
+def _iter_full_paths(path_list):
+    """
+    Iterates over all paths that are in a directory and its subdirectory, returning 
+    fully-specified paths.
+    """
+    for path in path_list:
+        if not os.path.isdir(path):
+            full_path = os.path.realpath(path)
+            yield path
+        else:
+            for root, dirs, filenames in os.walk(path):
+                for filename in filenames:
+                    full_path = os.path.realpath(os.path.join(root, filename))
+                    yield full_path        

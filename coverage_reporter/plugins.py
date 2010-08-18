@@ -1,3 +1,4 @@
+import optparse
 import sys
 
 from coverage_reporter.errors import PluginError, ConfigError
@@ -138,18 +139,35 @@ class PluginManager(object):
         self.reporter_filters = []
         self.reporters = []
 
-    def call_method(self, method_name, *args, **kwargs):
+    def get_option_parser(self):
+        parser = optparse.OptionParser()
+        self._call_method('add_options', parser)
+        return parser
+
+    def parse_options(self, args):
+        parser = self.get_option_parser()
+        options, path_list = parser.parse_args(args)
+        self._call_method('parse_options', options)
+        return path_list
+
+    def parse_plugin_options(self, args):
+        return
+
+    def initialize(self):
+        self._call_method('initialize')
+
+    def _call_method(self, method_name, *args, **kwargs):
         for plugin in self.plugins:
             method = getattr(plugin, method_name, None)
             if not method:
                 continue
             method(*args, **kwargs)
 
-    def load_plugins(self, config_obj, class_strings):
+    def load_plugins(self, cfg, class_strings):
         classes = self.load_classes(class_strings)
         for class_ in classes:
             self.validate_plugin(class_)
-            plugin = class_(config_obj)
+            plugin = class_(cfg)
             self.plugins.append(plugin)
             if hasattr(plugin, 'collect'):
                 self.collectors.append(plugin)

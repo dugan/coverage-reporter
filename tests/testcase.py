@@ -6,12 +6,14 @@ import unittest2
 
 from coverage_reporter.data import CoverageData
 from coverage_reporter.config import CoverageReporterConfig
+from coverage_reporter.plugins import PluginManager
 
 class CoverageReporterTestCase(unittest2.TestCase):
 
     def setUp(self):
         super(CoverageReporterTestCase, self).setUp()
         self.cfg = CoverageReporterConfig(read_defaults=False)
+        self.plugins = PluginManager()
 
     def run_program(self, program_name):
         if program_name in sys.modules:
@@ -25,7 +27,7 @@ class CoverageReporterTestCase(unittest2.TestCase):
         return self.load_plugins([plugin_name])[0]
 
     def load_plugins(self, plugin_list):
-        return self.cfg.load_plugins(plugin_list)
+        return self.plugins.load_plugins(self.cfg, plugin_list)
 
     def create_exact_coverage_data(self, path_dict):
         data = CoverageData()
