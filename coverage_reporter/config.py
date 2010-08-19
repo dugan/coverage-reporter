@@ -17,13 +17,17 @@ from coverage_reporter.errors import ConfigError
 # as you probably really want these.  Perhaps move to loading plugins from a set of directories, and only require
 # hard-coding the submodule name?
 
-DEFAULT_PLUGINS = ['coverage_reporter.collectors.figleaf_collector.FigleafCollector',
-                   'coverage_reporter.collectors.coverage_collector.CoveragePyCollector',
-                   'coverage_reporter.filters.patch.FilterByPatch',
-                   'coverage_reporter.filters.exclude.ExcludeFilter',
-                   'coverage_reporter.filters.minimum.MinimumMissingFilter',
-                   'coverage_reporter.reports.summarize.SummarizeReporter',
-                   'coverage_reporter.reports.annotate.AnnotateReporter',
+DEFAULT_PLUGIN_DIRS = [ os.path.dirname(__file__) + '/collectors/',
+                        os.path.dirname(__file__) + '/filters/',
+                        os.path.dirname(__file__) + '/reports/',
+                       ]
+DEFAULT_PLUGINS = [ 'figleaf_collector',
+                    'coverage_collector',
+                    'patch',
+                    'exclude',
+                    'minimum',
+                    'summarize',
+                    'annotate',
                    ]
 
 
@@ -34,7 +38,8 @@ class CoverageReporterConfig(object):
         self.cfg = ConfigParser.RawConfigParser()
         if read_defaults:
             self.read(*DEFAULT_PATHS)
-        self.plugin_classes = DEFAULT_PLUGINS
+        self.plugins = DEFAULT_PLUGINS
+        self.plugin_dirs = DEFAULT_PLUGIN_DIRS
 
     def read(self, *path_list):
         self.cfg.read(path_list)

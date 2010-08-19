@@ -10,18 +10,67 @@ coverage-reporter --coverage --patch=stdin --annotate <path>
 
 TODO - config file parsing fixups.  Have command line way of enabling/disabling plugins.
 """
+import optparse
 import sys
 
 from coverage_reporter import config
 from coverage_reporter import errors
-from coverage_reporter.plugins import PluginManager
+from coverage_reporter.pluginmgr import PluginManager
 from coverage_reporter.data import CoverageData
 
-def parse_options(cfg, plugins, argv):
-    plugins.parse_plugin_options(argv[1:])
-    plugins.load_plugins(cfg.get_section('coverage_reporter'), cfg.plugin_classes)
-    path_list = plugins.parse_options(argv[1:])
+# AttributeError only needed for Python 2.4
+_OPT_ERRS = (optparse.BadOptionError, optparse.OptionValueError, AttributeError)
+
+class _ImperviousOptionParser(optparse.OptionParser):
+    """
+    # recipe From unittest2
+    """
+    def error(self, msg):
+        pass
+    def exit(self, status=0, msg=None):
+        pass
+
+    print_usage = print_version = print_help = lambda self, file=None: None
+
+    def _process_short_opts(self, rargs, values):
+        try:
+            optparse.OptionParser._process_short_opts(self, rargs, values)
+        except _OPT_ERRS:
+            pass
+
+    def _process_long_opt(self, rargs, values):
+        try:
+            optparse.OptionParser._process_long_opt(self, rargs, values)
+        except _OPT_ERRS:
+            pass
+
+def get_config(args):
+    parser = _ImperviousOptionParser()
+    add_config_options(parser)
+    options, _ = parser.parse_args(args[:1])
+    read_config = not options.skip_default_config
+    cfg = config.CoverageReporterConfig(read_config)
+    for path in options.config_files:
+        cfg.read(path)
+    cfg.plugin_dirs.extend(options.plugin_dirs)
+    cfg.plugins.extend(options.plugins)
+    return cfg
+
+def setup_plugins(plugins, args):
+    parser = optparse.OptionParser()
+    add_config_options(parser)
+    plugins.add_plugin_options(parser)
+    options, path_list = parser.parse_args(args[1:])
+    path_list = plugins.parse_plugin_options(options)
+    plugins.initialize()
     return path_list
+
+def add_config_options(parser):
+    parser.add_option('--skip-default-config', dest='skip_default_config', action='store_true')
+    parser.add_option('--config-file', dest='config_files', action='append', default=[])
+    parser.add_option('--plugin-dir', dest='plugin_dirs', action='append', default=[])
+    parser.add_option('--plugin', dest='plugins', action='append', default=[])
+    parser.add_option('--disable-plugin', dest='disabled_plugins', action='append', default=[])
 
 def collect(collectors, path_list, cover_filter):
     data = CoverageData()
@@ -59,10 +108,11 @@ def validate_active_plugins(plugins):
         raise errors.CoverageReporterError('Please specify a source for coverage information')
 
 def main(argv):
+    cfg = get_config(argv)
     plugins = PluginManager()
-    cfg = config.CoverageReporterConfig()
-
-    path_list = parse_options(cfg, plugins, argv)
+    plugins.load_plugins(cfg.get_section('coverage_reporter'), cfg.plugin_dirs,
+                         cfg.plugins)
+    path_list = setup_plugins(plugins, argv)
     plugins.initialize()
     validate_active_plugins(plugins)
 
