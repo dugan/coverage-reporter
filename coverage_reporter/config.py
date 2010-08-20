@@ -10,39 +10,37 @@ import optparse
 import os
 import shlex
 
+from coverage_reporter import defaults
 from coverage_reporter.errors import ConfigError
 
-
-# Default set of plugins.  Need to figure out some way to add plugins without having to re-specify all of these,
-# as you probably really want these.  Perhaps move to loading plugins from a set of directories, and only require
-# hard-coding the submodule name?
-
-DEFAULT_PLUGIN_DIRS = [ os.path.dirname(__file__) + '/collectors/',
-                        os.path.dirname(__file__) + '/filters/',
-                        os.path.dirname(__file__) + '/reports/',
-                       ]
-DEFAULT_PLUGINS = [ 'figleaf_collector',
-                    'coverage_collector',
-                    'patch',
-                    'exclude',
-                    'minimum',
-                    'summarize',
-                    'annotate',
-                   ]
-
-
-DEFAULT_PATHS = ['/etc/coverage_reporter', os.path.expanduser('~/.coverage_reporter'), '.coverage_reporter']
+def get_config(args):
+    """
+    Method to get the correct configuration file for a set of command line arguments.
+    Takes into account --config-file, --plugins, --
+    """
+    options, _ = defaults.DEFAULT_OPTIONS.parse(args, ignore_errors=True)
+    read_config = not options.skip_default_config
+    cfg = CoverageReporterConfig(read_config)
+    for path in options.config_file:
+        cfg.read(path)
+    cfg.plugin_dirs.extend(options.plugin_dir)
+    cfg.plugins.extend(options.plugin)
+    return cfg
 
 class CoverageReporterConfig(object):
     def __init__(self, read_defaults=True):
         self.cfg = ConfigParser.RawConfigParser()
+        self.plugins = defaults.DEFAULT_PLUGINS
+        self.plugin_dirs = defaults.DEFAULT_PLUGIN_DIRS
         if read_defaults:
-            self.read(*DEFAULT_PATHS)
-        self.plugins = DEFAULT_PLUGINS
-        self.plugin_dirs = DEFAULT_PLUGIN_DIRS
+            self.read(*defaults.DEFAULT_CONFIG_PATHS)
 
     def read(self, *path_list):
-        self.cfg.read(path_list)
+        for path in path_list:
+            self.cfg.read(path_list)
+        section = self.get_section('plugins')
+        self.plugins += section.get_list('plugins', [])
+        self.plugin_dirs += section.get_list('plugin_dirs', [])
 
     def get_section(self, name):
         return ConfigSection(self.cfg, name)
@@ -82,3 +80,4 @@ class ConfigSection(object):
             return value
         lines = [ line.strip() for line in value.splitlines() ]
         return list(itertools.chain(*[ shlex.split(line) for line in lines if line and not line.startswith('#') ]))
+
