@@ -56,7 +56,7 @@ def validate_active_plugins(plugins):
 def main(argv):
     cfg = get_config(argv)
     plugins = load_plugins(cfg.plugin_dirs, cfg.plugins)
-    path_list = initialize_plugins(plugins, argv, cfg.get_section('coverage_reporter'))
+    path_list = initialize_plugins(plugins, argv[1:], cfg.get_section('coverage_reporter'))
     validate_active_plugins(plugins)
 
     data = collect(plugins.get_collectors(), path_list, plugins.get_coverage_filter())
