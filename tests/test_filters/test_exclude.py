@@ -16,7 +16,7 @@ class ExcludeTest(CoverageReporterTestCase):
                  'another_file' : True,
                  'whole_path' : True,
                  'whole_path2' : False}
-        filter = self.load_plugin('coverage_reporter.filters.exclude.ExcludeFilter')
+        filter = self.load_plugin('exclude')
         filter.exclude = excludes
         filter.initialize()
         for path, matched in paths.items():

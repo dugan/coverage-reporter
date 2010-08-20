@@ -14,7 +14,7 @@ class AnnotateTest(CoverageReporterTestCase):
             open(tempdir + '/bar', 'w').write('b\n' * 10)
             data = self.create_coverage_data({'foo' : {'missing' : 10, 'total' : 20},
                                               tempdir + '/bar' : {'missing' : 0, 'total' : 10}})
-            reporter = self.load_plugin('coverage_reporter.reports.annotate.AnnotateReporter')
+            reporter = self.load_plugin('annotate')
             annotate_dir = tempdir + '/annotate'
             reporter.annotate_dir = annotate_dir
             reporter.report(data, data.get_paths())

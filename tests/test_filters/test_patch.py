@@ -5,7 +5,7 @@ class PathTest(CoverageReporterTestCase):
     def test_patch_filter(self):
         data = self.create_exact_coverage_data({'tests/data/prog3.py' : {'lines'   : [1,2,3,4,5,6,8],
                                                                    'covered' : [1,2,3,6,8]}})
-        filter = self.load_plugin('coverage_reporter.filters.patch.FilterByPatch')
+        filter = self.load_plugin('patch')
         filter.patch = 'tests/data/prog3.patch'
         filter.patch_level = 0
         new_data = filter.filter(data)

@@ -9,7 +9,7 @@ class SummarizeTest(CoverageReporterTestCase):
         data = self.create_coverage_data({'foo' : {'missing' : 10, 'total' : 80},
                                         'bar' : {'missing' : 0, 'total' : 10},
                                         'long_name_foo_another_long_name' : {'missing' : 10, 'total' : 10}})
-        reporter = self.load_plugin('coverage_reporter.reports.summarize.SummarizeReporter')
+        reporter = self.load_plugin('summarize')
         orig_stdout = sys.stdout
         captured = StringIO()
         try:

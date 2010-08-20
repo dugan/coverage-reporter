@@ -4,7 +4,7 @@ import sys
 from tests.testcase import *
 
 import coverage_reporter
-from coverage_reporter.plugins import Filter
+from coverage_reporter.pluginmgr import Filter
 
 
 class FigLeafTest(CoverageReporterTestCase):
@@ -33,7 +33,7 @@ class FigLeafTest(CoverageReporterTestCase):
             # no support for gettrace
             return
         self.cover_program('tests.data.prog1')
-        collector = self.load_plugin('coverage_reporter.collectors.figleaf_collector.FigleafCollector')
+        collector = self.load_plugin('figleaf_collector')
         collector.figleaf_file = '.figleaf_test'
         data = collector.collect(['tests/data/prog1.py'])
         full_path = os.path.realpath('tests/data/prog1.py')

@@ -32,7 +32,7 @@ class CoveragePyTest(CoverageReporterTestCase):
             # no support for gettrace
             return
         self.cover_program('tests.data.prog1')
-        collector = self.load_plugin('coverage_reporter.collectors.coverage_collector.CoveragePyCollector')
+        collector = self.load_plugin('coverage_collector')
         collector.coverage_file = '.test_coverage'
         data = collector.collect(['tests/data/prog1.py'])
         full_path = os.path.realpath('tests/data/prog1.py')
